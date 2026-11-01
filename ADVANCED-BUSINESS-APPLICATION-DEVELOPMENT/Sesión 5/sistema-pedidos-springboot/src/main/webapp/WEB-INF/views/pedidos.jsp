@@ -19,7 +19,7 @@
             <p class="eyebrow">Spring Boot 4.1 · Spring MVC · Inyección de Dependencias</p>
             <h1>Sistema de Pedidos</h1>
             <p class="subtitulo">
-                El catálogo, precio y stock provienen de inventario-service; H2 conserva los pedidos durante la ejecución.
+                El catálogo, precio y stock provienen de inventario-service; MySQL conserva los pedidos.
             </p>
         </div>
         <c:url var="logoutUrl" value="/logout"/>
@@ -28,7 +28,8 @@
             <button type="submit">Cerrar sesión</button>
         </form>
         <div class="flujo">
-            DispatcherServlet → Controller → Service → RestClient → inventario-service · Pedido → H2
+            <c:url var="reportesUrl" value="/reportes/pedidos"/>
+            <a href="${reportesUrl}">Consultar reportes de pedidos</a>
         </div>
     </header>
 

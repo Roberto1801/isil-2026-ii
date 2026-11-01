@@ -1,5 +1,9 @@
 package com.isil.edu.pe.spedidos.controller;
 
+import java.math.BigDecimal;
+import com.isil.edu.pe.spedidos.controller.dto.ClienteFrecuenteDto;
+
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 import com.isil.edu.pe.spedidos.controller.dto.PedidoResponse;
@@ -25,6 +29,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/pedidos")
 public class PedidoReporteController {
+
+  @GetMapping(value = "/busqueda-avanzada", produces = MediaType.APPLICATION_JSON_VALUE)
+  public List<PedidoResponse> busquedaAvanzada(@RequestParam String cliente,
+      @RequestParam BigDecimal totalMinimo) {
+    return reporteService.buscarPedidosPorClienteYTotalMinimo(cliente, totalMinimo)
+        .stream().map(PedidoResponse::from).toList();
+  }
+
+  @GetMapping(value = "/clientes-frecuentes", produces = MediaType.APPLICATION_JSON_VALUE)
+  public List<ClienteFrecuenteDto> clientesFrecuentes(
+      @RequestParam Integer minPedidos) {
+    return reporteService.listarClientesFrecuentes(minPedidos).stream()
+        .map(ClienteFrecuenteDto::from).toList();
+  }
 
   private final PedidoReporteService
       reporteService;
@@ -78,4 +96,3 @@ public class PedidoReporteController {
     return Link.of(linkTo(PedidoReporteController.class).toUri() + "{?cliente}");
   }
 }
-

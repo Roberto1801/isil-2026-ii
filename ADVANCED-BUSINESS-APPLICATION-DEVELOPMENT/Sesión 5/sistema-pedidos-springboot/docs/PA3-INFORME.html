@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es"><head><meta charset="UTF-8"><title>PA3 — Informe técnico</title>
+<style>
+@page {size:A4;margin:18mm}
+body {font:11pt/1.45 Arial,sans-serif;color:#182334;margin:0}
+section {break-after:page;page-break-after:always;max-width:174mm;margin:0 auto;padding:8mm 0}
+section:last-child {break-after:auto;page-break-after:auto}
+h1 {font-size:22pt} h2 {font-size:16pt;color:#16446a} h3 {font-size:12pt}
+p {text-align:justify} table {border-collapse:collapse;width:100%;font-size:10pt}
+td,th {border:1px solid #b7c6d5;padding:5px;text-align:left}
+code,pre {font:9pt/1.4 Consolas,monospace;overflow-wrap:anywhere;white-space:pre-wrap}
+small {color:#435369} .nota {background:#eef4f9;padding:9px}
+@media screen {body {background:#eee} section {background:white;padding:18mm;margin:12px auto;min-height:240mm}}
+</style></head><body>
+<section>
+<small>Desarrollo de Aplicaciones Empresariales Avanzado · PA3 · Página 1 de 5</small>
+<h1>Consultas JDBC y reportes seguros de pedidos</h1>
+<h2>1. Base, objetivo y alcance</h2>
+<p>La ampliación permite consultar pedidos por cliente y monto mínimo e identificar clientes frecuentes.
+Se conserva la aplicación Java 21 con Spring Boot 4.1.1, Spring MVC, JSP, Spring Security,
+Spring Data JPA y el adaptador HTTP de inventario. Las nuevas consultas se implementan con Spring JDBC.
+El propósito es ampliar la lectura analítica sin sustituir las operaciones existentes.</p>
+<p>La consigna menciona <code>sistema-pedidos-springboot-jdbc-mysql</code>. La inspección del
+repositorio oficial y de su rama <code>feature/sistema-pedidos-spring-jdbc</code> encontró
+el proyecto en <code>ADVANCED-BUSINESS-APPLICATION-DEVELOPMENT/Sesión 5/sistema-pedidos-springboot</code>.
+La referencia remota coincidió con el commit
+<code>4edae85a7176f7b2d3525e66e84d336faa5d2eae</code>.
+Tras comunicar la discrepancia, el estudiante autorizó expresamente esta ubicación.
+El trabajo permanece en <code>feature/pa3-inca-villagomez</code>.</p>
+<h3>Separación entre base y aporte PA3</h3>
+<p>Ya existían el registro y listado JPA, la reserva HTTP de inventario, la búsqueda simple
+por cliente, el resumen consolidado, los productos más vendidos, sus representaciones JSON/HAL,
+los roles OPERADOR y CONSULTA y CSRF. También existían veinte pruebas. Estos componentes
+se reutilizan y no se presentan como aportes nuevos. Aunque JpaRepository proporciona
+operaciones CRUD, no se encontraron endpoints de edición o eliminación en los controladores.</p>
+<p>La PA3 agrega dos consultas parametrizadas, validaciones en Service, dos endpoints REST,
+un controlador MVC y una JSP de reportes. Amplía la autorización para GET de reportes y
+añade trece pruebas H2/HTTP, además de una comprobación MySQL optativa.
+No modifica la entidad ni el contrato del servicio externo de Sesión 4.</p>
+<h3>Configuración preservada</h3>
+<p>MySQL continúa como base de ejecución normal y H2 como base de integración automática.
+Se mantienen las variables externas de conexión y contraseñas. La documentación no agrega
+credenciales reales. Las comprobaciones no necesitan cambios en otros proyectos, commits ni push.</p>
+<p class="nota">Este informe tiene cinco secciones con salto de página A4. La carátula y las
+capturas manuales se adjuntan aparte. Los resultados no observados se identifican como pendientes.</p>
+</section>
+<section>
+<small>PA3 · Página 2 de 5</small>
+<h2>2. Arquitectura y consultas</h2>
+<pre>Navegador / cliente HTTP
+             ↓
+Spring Security: sesión, roles, CSRF
+             ↓
+  ┌──────────────────┬────────────────────┐
+  │ MVC de reportes  │ REST de reportes   │
+  │ Model → JSP      │ DTO → JSON         │
+  └─────────┬────────┴─────────┬──────────┘
+            └────────┬────────┘
+             PedidoReporteService
+           validación y transformación
+                      ↓
+       PedidoReporteJdbcRepository
+       NamedParameterJdbcTemplate
+          RowMapper / proyecciones
+                      ↓
+             MySQL / H2 (test)
+
+Flujo existente separado:
+PedidoController → PedidoService → JPA → MySQL
+                                → HTTP → inventario</pre>
+<p>La inyección por constructor conserva responsabilidades explícitas. Los controladores
+delegan las reglas al servicio; el repositorio ejecuta SQL y materializa los resultados.
+La primera consulta reutiliza PedidoRowMapper. La segunda devuelve una proyección de
+repositorio que se transforma en modelo de servicio y DTO de salida.</p>
+<h3>Búsqueda avanzada</h3>
+<p><code>buscarPedidosPorClienteYTotalMinimo(cliente, totalMinimo)</code> usa
+<code>NamedParameterJdbcTemplate</code> con parámetros <code>:cliente</code> y
+<code>:totalMinimo</code>. La búsqueda parcial aplica LOWER y LIKE; el monto se filtra
+mediante <code>total &gt;= :totalMinimo</code> y se ordena por ID descendente.
+Solo se formatea la lista constante de columnas; los valores del usuario se enlazan.
+Este uso corresponde al mecanismo de parámetros nombrados documentado por Spring (Spring, s. f.-a).</p>
+<h3>Clientes frecuentes</h3>
+<p><code>listarClientesFrecuentes(minPedidos)</code> agrupa por cliente y utiliza
+<code>HAVING COUNT(*) &gt;= :minPedidos</code>. COUNT(*) mide pedidos, SUM(cantidad)
+unidades, SUM(total) importe y AVG(total) ticket promedio. Se ordena por cantidad
+de pedidos descendente y nombre ascendente. Los importes se conservan como BigDecimal.</p>
+<p>La identidad del cliente es el nombre almacenado. No se inventa una entidad Cliente:
+los homónimos pueden agruparse y las variantes pueden separarse según la collation.
+La semántica de comodines LIKE se conserva; no se promete coincidencia literal de % o _.</p>
+</section>
+<section>
+<small>PA3 · Página 3 de 5</small>
+<h2>3. Contratos, interfaz y seguridad</h2>
+<table><thead><tr><th>GET relativo al contexto</th><th>Entrada</th><th>Salida</th></tr></thead>
+<tbody>
+<tr><td>/api/v1/pedidos/busqueda-avanzada</td><td>cliente, totalMinimo</td><td>Lista JSON de pedidos</td></tr>
+<tr><td>/api/v1/pedidos/clientes-frecuentes</td><td>minPedidos</td><td>Cliente y cuatro agregados</td></tr>
+<tr><td>/reportes/pedidos</td><td>Filtros de consulta</td><td>reportes-pedidos.jsp</td></tr>
+</tbody></table>
+<p>El contexto configurado es <code>/sistema-pedidos</code>. REST usa @RestController
+y la vista usa @Controller, @GetMapping, Model y el ViewResolver ya configurado.
+La JSP reside en <code>/WEB-INF/views/reportes-pedidos.jsp</code> y presenta el
+resumen general, la búsqueda avanzada y los clientes frecuentes. Los formularios GET
+realizan consultas; no escriben pedidos ni llaman al inventario.</p>
+<h3>Validación y errores</h3>
+<p>El servicio rechaza cliente nulo o vacío, monto mínimo nulo o negativo y minPedidos
+nulo o menor que uno mediante ReporteValidacionException. La API responde 400 con
+un campo error. Los errores de conversión y parámetros obligatorios ausentes también
+reciben 400. La vista muestra mensajes controlados y conserva valores válidamente
+convertidos. Una búsqueda válida sin resultados responde 200 con lista vacía.</p>
+<p>Las reglas no se duplican en el controlador. Los atributos se escapan en la JSP,
+incluidos nombres con caracteres especiales. El formulario de búsqueda requiere cliente
+y monto; el de frecuencia tiene umbral inicial dos. El resumen se mantiene global,
+sin atribuirle filtros que el SQL existente no implementa.</p>
+<h3>Autorización y CSRF</h3>
+<p>OPERADOR y CONSULTA pueden acceder mediante GET a /reportes/** y a las APIs
+de reportes. Los anónimos se redirigen al login existente. POST /pedidos permanece
+exclusivo de OPERADOR. Un token CSRF válido no concede a CONSULTA permiso para
+registrar; un OPERADOR sin token válido tampoco puede registrar.</p>
+<p>Se conserva la protección CSRF predeterminada de Spring Security. La documentación
+oficial la aplica a métodos inseguros como POST (Spring, s. f.-b). El logout de la
+nueva vista utiliza POST con token. No se agregan JWT, OAuth2/OIDC ni tablas de usuarios.</p>
+<p>La ruta antigua /api/v1/orders conserva su contrato. La PA3 tampoco altera los enlaces
+HAL del reporte de productos ni rehabilita la URI /api/v1/pedidos/buscar que las
+pruebas originales esperan ausente.</p>
+</section>
+<section>
+<small>PA3 · Página 4 de 5</small>
+<h2>4. Pruebas y evidencias de escenarios</h2>
+<p>Las pruebas nuevas usan JUnit 5, H2, MockMvc y Mockito cuando corresponde.
+Se distinguen preparación, acción y aserción. Las pruebas MockMvc verifican HTTP,
+seguridad y modelo; una prueba HTTP con Tomcat/Jasper comprueba renderizado real
+de JSP y el escape del nombre PA3 &lt;Ana&gt;. Esto evita atribuir una validación visual
+a un simple forward MVC.</p>
+<table><thead><tr><th>Escenario</th><th>Comprobación automática</th><th>Evidencia manual pendiente</th></tr></thead>
+<tbody>
+<tr><td>1. Búsqueda</td><td>Cliente y total mínimo, límite inclusivo, ID descendente, JSON y JSP H2.</td><td>Capturas y contraste con MySQL persistente.</td></tr>
+<tr><td>2. Frecuentes</td><td>Ana: 2 pedidos, 6 unidades, importe 300, ticket 150; Carlos excluido con mínimo 2.</td><td>SQL, JSON y JSP con el catálogo real.</td></tr>
+<tr><td>3. Inválidos</td><td>Cliente vacío, monto negativo, umbral cero, null, formato y ausencia: 400 controlado.</td><td>Capturas de mensajes y estados.</td></tr>
+<tr><td>4. Inventario caído</td><td>Adaptador simulado: POST con token válido devuelve 503; reportes continúan 200.</td><td>Detener el servicio real y reproducir.</td></tr>
+<tr><td>5. Seguridad</td><td>Anónimo al login; CONSULTA consulta; rol ajeno y CSRF inválido: 403. Se conservan pruebas originales de POST.</td><td>Demostración con sesiones independientes.</td></tr>
+</tbody></table>
+<h3>Resultados registrados</h3>
+<p>La ejecución con los veinte tests originales pasó. La suite ampliada ejecutó treinta
+y tres pruebas con cero fallos y cero errores. Una aserción inicial de redirección
+se corrigió para comprobar exactamente /login. No se ocultó el fallo relajando
+el estado de autenticación esperado.</p>
+<p>Se preparó un test optativo MySQL que usa una tabla temporal de conexión, sin
+modificar pedidos persistentes. Su ejecución se intentó y falló antes de crear la tabla:
+el servidor rechazó el acceso del usuario configurado. Por ello no se afirma que
+las consultas hayan sido ejecutadas satisfactoriamente contra MySQL.</p>
+<p>La verificación final con Maven verify terminó en BUILD SUCCESS y generó el WAR:
+34 casos registrados, 33 aprobados, cero fallos, cero errores y un MySQL optativo omitido.
+Los resultados de Maven y empaquetado se registran en README y Surefire.
+La prueba MySQL se omite por defecto; se activa mediante
+<code>-Dpa3.mysql=true -Dtest=Pa3MysqlRepositoryTest</code>.
+La guía PA3-EVIDENCIAS.md contiene pasos, datos esperados y SQL de contraste.</p>
+</section>
+<section>
+<small>PA3 · Página 5 de 5</small>
+<h2>5. Riesgos, entrega y referencias</h2>
+<p>La combinación JPA/JDBC conserva el esquema existente. Ambas rutas deben mantener
+los mismos nombres de columnas, tipos monetarios y fecha no nula esperada por
+PedidoRowMapper. No se cambia ddl-auto=update de MySQL ni create-drop de H2 de
+pruebas. Los tests H2 no deben ejecutarse contra la base persistente.</p>
+<p>H2 ofrece un modo de compatibilidad MySQL (H2 Database, s. f.), pero ello no
+demuestra equivalencia completa entre motores. Deben verificarse collation, escala
+de AVG, orden de empates y datos reales. El SQL agregado utiliza funciones comunes;
+el bloqueo actual es de autenticación MySQL, no evidencia de éxito ni de incompatibilidad SQL.</p>
+<p>La reserva remota precede al guardado local. La transacción JPA no revierte una
+reserva en inventario si después falla MySQL. La PA3 conserva este flujo y no añade
+reintentos automáticos que puedan duplicar reservas. El listado original /pedidos carga
+productos del servicio remoto y puede fallar con inventario detenido; la nueva página
+/reportes/pedidos consulta exclusivamente datos locales.</p>
+<p>Las búsquedas no incluyen paginación porque la consigna no la exige. Un volumen alto
+puede aumentar el tiempo de consulta. LOWER con LIKE y comodín inicial puede limitar
+el uso de índices. Estas limitaciones quedan documentadas sin introducir migraciones,
+normalización de clientes o funciones adicionales fuera del alcance.</p>
+<h3>Contenido entregable</h3>
+<p>Se incluyen código de consultas, servicio y DTO, REST y manejo de entradas, MVC/JSP,
+regla GET de reportes, pruebas nuevas, README ampliado, diagrama Mermaid y guía de
+cinco escenarios. No se modifican otros proyectos ni se realizan commits o push.
+Antes de la entrega académica se deben completar las capturas manuales, configurar
+el acceso MySQL y repetir su comprobación optativa. No se adjuntan evidencias inventadas.</p>
+<h3>Referencias en formato APA</h3>
+<p>Spring. (s. f.-a). <i>Using the JDBC core classes to control basic JDBC processing and error handling</i>.
+Spring Framework. Recuperado el 31 de octubre de 2026, de
+<a href="https://docs.spring.io/spring-framework/reference/data-access/jdbc/core.html">https://docs.spring.io/spring-framework/reference/data-access/jdbc/core.html</a></p>
+<p>Spring. (s. f.-b). <i>Cross site request forgery (CSRF)</i>. Spring Security.
+Recuperado el 31 de octubre de 2026, de
+<a href="https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html">https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html</a></p>
+<p>H2 Database. (s. f.). <i>Features</i>. Recuperado el 31 de octubre de 2026, de
+<a href="https://h2database.com/html/features.html">https://h2database.com/html/features.html</a></p>
+</section></body></html>

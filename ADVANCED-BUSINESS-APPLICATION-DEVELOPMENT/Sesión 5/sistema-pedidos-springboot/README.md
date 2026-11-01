@@ -1,5 +1,119 @@
 # Sistema de Pedidos — Spring Boot
 
+## PA3 — ampliación de reportes
+
+**Resultado final (30/10/2026, Java 21.0.11):** `./mvnw.cmd verify` terminó en
+`BUILD SUCCESS`, generó `target/sistema-pedidos-springboot.war` y registró
+34 casos: **33 aprobados, 0 fallos, 0 errores y 1 omitido** (MySQL optativo).
+Son 20 pruebas originales conservadas y 13 nuevas H2/HTTP aprobadas.
+Además se agregó un test MySQL optativo: su ejecución separada con
+`./mvnw.cmd '-Dpa3.mysql=true' '-Dtest=Pa3MysqlRepositoryTest' test` falló
+por `Access denied` para el usuario configurado, antes de crear la tabla temporal.
+Es un problema de acceso del entorno pendiente de resolver; no se declara
+compatibilidad ejecutada con éxito en MySQL. `git diff --check` no reportó errores.
+No se modificaron archivos de otros proyectos ni se hicieron commits o push.
+
+### Archivos de la ampliación
+
+Modificados (rutas Java relativas a `src/main/java/com/isil/edu/pe/spedidos/`):
+- `repository/PedidoReporteJdbcRepository.java`: las dos consultas nuevas.
+- `service/PedidoReporteService.java` y `service/impl/PedidoReporteServiceImpl.java`:
+  contratos, validación y transformación.
+- `controller/PedidoReporteController.java`: los dos endpoints JSON.
+- `config/SecurityConfig.java`: autorización GET de reportes.
+- `src/main/webapp/WEB-INF/views/pedidos.jsp`: enlace a reportes y texto MySQL.
+- `README.md`: base autorizada, uso, alcance y resultados.
+
+Creados:
+- `controller/PedidoReporteWebController.java` y `controller/ReporteErrorHandler.java`.
+- `controller/dto/ClienteFrecuenteDto.java`, `service/domain/ClienteFrecuente.java`,
+  `repository/projection/ClienteFrecuenteProjection.java` y
+  `exception/ReporteValidacionException.java`.
+- `src/main/webapp/WEB-INF/views/reportes-pedidos.jsp`.
+- `src/test/java/com/isil/edu/pe/spedidos/controller/Pa3ReportesIntegrationTest.java`,
+  `controller/Pa3JspHttpIntegrationTest.java` y `repository/Pa3MysqlRepositoryTest.java`
+  (los dos últimos relativos al mismo paquete de pruebas).
+- `docs/PA3-ARQUITECTURA.md`, `docs/PA3-EVIDENCIAS.md` y `docs/PA3-INFORME.html`.
+
+### Base verificada y alcance
+La consigna denomina la base `sistema-pedidos-springboot-jdbc-mysql`.
+En la rama oficial `feature/sistema-pedidos-spring-jdbc`, commit
+`4edae85a7176f7b2d3525e66e84d336faa5d2eae`, la ubicación real es
+`ADVANCED-BUSINESS-APPLICATION-DEVELOPMENT/Sesión 5/sistema-pedidos-springboot`;
+su artifactId también es `sistema-pedidos-springboot`. Se verificó la referencia
+remota del profesor y el estudiante autorizó expresamente esta base.
+Se conserva la rama `feature/pa3-inca-villagomez`, el nombre Maven y el contexto.
+
+Son aportes existentes del docente: registro/listado JPA, cliente HTTP de inventario,
+búsqueda simple JDBC, resumen, productos más vendidos y HAL, roles, CSRF y las
+20 pruebas originales. El repositorio JPA expone operaciones CRUD, pero los
+controladores inspeccionados solo publican registro y listado; no se atribuyen
+endpoints de edición/eliminación inexistentes.
+
+### Implementación por etapas
+1. JDBC: búsqueda combinada y agregación de clientes, con parámetros nombrados.
+2. Servicio: validación centralizada y conversión de proyecciones a modelos.
+3. REST y MVC: DTO JSON, mensajes 400 y JSP con formularios GET.
+4. Seguridad: GET de reportes para OPERADOR/CONSULTA; se conserva CSRF y POST exclusivo.
+5. Pruebas y documentación: integración H2, HTTP/Jasper y guía de evidencias.
+
+### Uso
+Con la aplicación iniciada, la raíz normal es
+`http://localhost:8081/sistema-pedidos`. Autenticarse con el formulario existente;
+usar las variables `PEDIDOS_OPERADOR_PASSWORD` y `PEDIDOS_CONSULTA_PASSWORD`
+para las credenciales del entorno. No incluir secretos en capturas.
+
+| Recurso (relativo al contexto) | Parámetros | Respuesta |
+|---|---|---|
+| GET /api/v1/pedidos/busqueda-avanzada | cliente, totalMinimo | JSON de pedidos, ID descendente |
+| GET /api/v1/pedidos/clientes-frecuentes | minPedidos | JSON con cliente y cuatro indicadores |
+| GET /reportes/pedidos | cliente y totalMinimo opcionales como pareja; minPedidos por defecto 2 | JSP, resumen y consultas |
+
+La búsqueda compara una parte del nombre sin distinguir mayúsculas, elimina espacios
+externos y aplica `total >= totalMinimo`. Los caracteres `%` y `_` conservan la
+semántica LIKE de la búsqueda del docente; no son escape literal. Los valores
+siempre se enlazan, nunca se interpolan en SQL. Cliente vacío, monto negativo o nulo
+y umbral menor que uno o nulo se rechazan en Service.
+Los parámetros REST son obligatorios; entradas ausentes o con formato incorrecto
+devuelven 400 con mensaje. La JSP muestra errores 400 sin construir HTML en Java.
+Sin coincidencias, la API devuelve 200 con una lista vacía.
+
+Los clientes se agrupan por el nombre almacenado: COUNT(*) cuenta pedidos,
+SUM(cantidad) unidades, SUM(total) importe y AVG(total) ticket. HAVING aplica
+el mínimo inclusivo. La agrupación depende de la collation de la base; homónimos
+pueden quedar unidos y variantes del nombre pueden representar grupos diferentes.
+No se crea una entidad Cliente ni se cambia el esquema. Se conserva BigDecimal
+sin redondear los agregados en el servicio; la escala de AVG puede variar por motor.
+
+### Seguridad y regresión
+GET /reportes/** y GET /api/v1/pedidos/** requieren OPERADOR o CONSULTA.
+Anónimo se redirige al login configurado. POST /pedidos continúa siendo exclusivo
+de OPERADOR y exige CSRF válido. CONSULTA con token válido sigue recibiendo 403.
+Los formularios de consultas usan GET; el logout usa POST y token.
+No se introducen JWT, OAuth ni usuarios persistidos.
+
+Los reportes acceden solo a la base local. El registro conserva la reserva HTTP
+antes de persistir con JPA; la transacción local no revierte una reserva remota si
+falla MySQL. No se añaden reintentos que puedan duplicar reservas.
+No se cambian la entidad, el cliente HTTP ni el repositorio JPA existentes.
+
+### Comprobaciones y entrega
+Desde este directorio, ejecutar `./mvnw.cmd test` en Windows
+(o `./mvnw test` en un entorno compatible). Java requerido: 21.
+H2 está limitado al scope test y al perfil test; MySQL sigue siendo la base normal.
+Las nuevas pruebas usan datos aislados; no ejecutar sus DELETE de preparación en MySQL.
+Los resultados XML/TXT se generan en `target/surefire-reports/`.
+
+- [Guía de los cinco escenarios y evidencias](docs/PA3-EVIDENCIAS.md).
+- [Diagrama de arquitectura](docs/PA3-ARQUITECTURA.md).
+- [Informe de cinco páginas para imprimir](docs/PA3-INFORME.html).
+
+MockMvc verifica modelo, JSON y filtros. La prueba HTTP usa Tomcat/Jasper real con
+H2 y un adaptador de inventario simulado como no disponible: no equivale a detener
+el servicio externo real. Las capturas MySQL y la demostración contra inventario
+real deben documentarse separadamente, sin afirmar resultados no observados.
+
+
 > Proyecto académico evolutivo · **Desarrollo de Aplicaciones Empresariales Avanzado** · ISIL  
 > **Sesiones 7:** Spring MVC, seguridad web con Spring Security.
 > **Sesiones 9:** Persistencia de reportes con Spring JDBC.

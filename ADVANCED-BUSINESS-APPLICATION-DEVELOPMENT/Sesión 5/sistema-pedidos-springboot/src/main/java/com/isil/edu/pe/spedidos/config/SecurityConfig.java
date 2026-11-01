@@ -22,6 +22,8 @@ public class SecurityConfig {
     return httpSecurity.authorizeHttpRequests(auth -> auth
             .requestMatchers("/assets/**").permitAll()
             .requestMatchers("/h2-console/**").denyAll()
+            .requestMatchers(HttpMethod.GET, "/reportes/**")
+              .hasAnyRole("OPERADOR", "CONSULTA")
             .requestMatchers(HttpMethod.POST, "/pedidos")
               .hasAnyRole("OPERADOR")
             .requestMatchers(HttpMethod.GET, "/api/v1/pedidos", "/api/v1/pedidos/**")

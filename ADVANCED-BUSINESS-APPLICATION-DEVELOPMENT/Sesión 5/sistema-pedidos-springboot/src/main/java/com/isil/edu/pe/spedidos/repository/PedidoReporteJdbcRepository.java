@@ -1,5 +1,8 @@
 package com.isil.edu.pe.spedidos.repository;
 
+import com.isil.edu.pe.spedidos.repository.projection.ClienteFrecuenteProjection;
+
+
 import com.isil.edu.pe.spedidos.entity.Pedido;
 import com.isil.edu.pe.spedidos.repository.mapper.PedidoRowMapper;
 import com.isil.edu.pe.spedidos.repository.projection.ProductoVendidoProjection;
@@ -17,6 +20,34 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public class PedidoReporteJdbcRepository {
+
+  public List<Pedido> buscarPedidosPorClienteYTotalMinimo(String cliente, BigDecimal totalMinimo) {
+    String sql = """
+        SELECT %s FROM pedido
+        WHERE LOWER(cliente) LIKE LOWER(:cliente) AND total >= :totalMinimo
+        ORDER BY id DESC
+        """.formatted(COLUMNAS_PEDIDO);
+    return namedParameterJdbcTemplate.query(sql,
+        Map.of("cliente", "%" + cliente.trim() + "%", "totalMinimo", totalMinimo),
+        pedidoRowMapper);
+  }
+
+  public List<ClienteFrecuenteProjection> listarClientesFrecuentes(
+      int minPedidos) {
+    String sql = """
+        SELECT cliente, COUNT(*) AS total_pedidos, SUM(cantidad) AS total_unidades,
+               SUM(total) AS importe_acumulado, AVG(total) AS ticket_promedio
+        FROM pedido
+        GROUP BY cliente
+        HAVING COUNT(*) >= :minPedidos
+        ORDER BY total_pedidos DESC, cliente ASC
+        """;
+    return namedParameterJdbcTemplate.query(sql, Map.of("minPedidos", minPedidos),
+        (rs, rowNum) -> new ClienteFrecuenteProjection(
+            rs.getString("cliente"), rs.getLong("total_pedidos"),
+            rs.getLong("total_unidades"), rs.getBigDecimal("importe_acumulado"),
+            rs.getBigDecimal("ticket_promedio")));
+  }
 
   private static final String COLUMNAS_PEDIDO = """
       id,
