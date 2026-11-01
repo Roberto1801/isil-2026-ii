@@ -11,7 +11,7 @@ Además se agregó un test MySQL optativo: su ejecución separada con
 por `Access denied` para el usuario configurado, antes de crear la tabla temporal.
 Es un problema de acceso del entorno pendiente de resolver; no se declara
 compatibilidad ejecutada con éxito en MySQL. `git diff --check` no reportó errores.
-No se modificaron archivos de otros proyectos ni se hicieron commits o push.
+Los cambios de la PA3 se registraron en la rama feature/pa3-inca-villagomez del repositorio personal de GitHub.
 
 ### Archivos de la ampliación
 
@@ -332,9 +332,9 @@ server.servlet.context-path=/sistema-pedidos
 spring.mvc.view.prefix=/WEB-INF/views/
 spring.mvc.view.suffix=.jsp
 
-spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/sistema_pedidos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima}
-spring.datasource.username=${DB_USERNAME:root}
-spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/pedidosdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima}
+spring.datasource.username=${DB_USERNAME:spedidos_app}
+spring.datasource.password=${DB_PASSWORD}
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.open-in-view=false
@@ -376,7 +376,7 @@ Iniciar `inventario-service` en WildFly y verificar que está accesible en `http
 
 ### 7.2 Preparar MySQL
 
-Crear la base `sistema_pedidos` y verificar las variables `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`. H2 no se necesita para ejecutar la aplicación: queda restringido a la suite de pruebas.
+Crear la base `pedidosdb` y verificar las variables `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`. H2 no se necesita para ejecutar la aplicación: queda restringido a la suite de pruebas.
 
 ### 7.3 Compilar y ejecutar Sistema de Pedidos
 
@@ -552,24 +552,32 @@ Las pruebas unitarias puras (`PedidoServiceImplTest`, `PedidoApiControllerTest`)
 La aplicación utiliza **MySQL** cuando se ejecuta normalmente. La conexión se externaliza para no fijar credenciales reales en el repositorio:
 
 ```properties
-spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/sistema_pedidos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima}
-spring.datasource.username=${DB_USERNAME:root}
-spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/pedidosdb?serverTimezone=America/Lima}
+spring.datasource.username=${DB_USERNAME:spedidos_app}
+spring.datasource.password=${DB_PASSWORD}
 ```
+### Preparación de la base de datos mediante script SQL
 
-Crear previamente la base de datos local, por ejemplo:
+El proyecto incluye el archivo `Script_BD_usuario_MySql.sql`, ubicado en la raíz de `sistema-pedidos-springboot`. Este script permite preparar la base de datos MySQL y el usuario de acceso de la aplicación.
+
+Antes de ejecutarlo, se deben revisar sus valores y reemplazar los marcadores de contraseña por credenciales locales. No se deben publicar contraseñas reales en GitHub.
+
+La aplicación utiliza la base de datos `pedidosdb` y el usuario `spedidos_app`. Si ambos ya están configurados, no es necesario volver a ejecutar el script.
+
+
+
+Como alternativa, si la base de datos todavía no existe, puede crearse manualmente:
 
 ```sql
-CREATE DATABASE sistema_pedidos
+CREATE DATABASE pedidosdb
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 ```
-
 En PowerShell pueden establecerse credenciales sin modificar `application.properties`:
 
 ```powershell
-$env:DB_URL = "jdbc:mysql://localhost:3306/sistema_pedidos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima"
-$env:DB_USERNAME = "root"
+$env:DB_URL = "jdbc:mysql://localhost:3306/pedidosdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima"
+$env:DB_USERNAME = "spedidos_app"
 $env:DB_PASSWORD = "<clave-local>"
 ```
 
