@@ -1,0 +1,8 @@
+Captura real GET: 2026-11-22T13:08:57.3973498-05:00
+URL: http://localhost:8083/pedidos-reportes-service/api/v1/pedidos/revisiones?estado=PENDIENTE
+HTTP 200
+Content-Type: application/json
+JSON valido: True
+
+Cuerpo recibido:
+[{"pedidoId":2,"cliente":"Cliente Validación PA4","productoNombre":"Laptop","cantidad":1,"total":2500.00,"revisado":false,"observacion":null,"fechaRevision":null}]

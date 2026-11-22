@@ -1,0 +1,8 @@
+Captura real GET: 2026-11-22T13:08:57.7473647-05:00
+URL: http://localhost:8083/pedidos-reportes-service/api/v1/pedidos/estadisticas/revisiones
+HTTP 200
+Content-Type: application/json
+JSON valido: True
+
+Cuerpo recibido:
+{"totalPedidos":2,"totalRevisados":1,"totalPendientes":1,"porcentajeRevisado":50.00}

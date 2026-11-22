@@ -1,4 +1,4 @@
-﻿# Índice de evidencias PA4
+# Índice de evidencias PA4
 
 Organizado el 22/11/2026 a partir de archivos existentes. No se ejecutaron pruebas, servicios ni consultas a bases de datos. Las evidencias son históricas: no certifican una ejecución nueva del código actual.
 
@@ -58,16 +58,40 @@ Las diez invocaciones REST usan MockMvc y Mockito. La undécima prueba S12 es `P
 
 ## Evidencias todavía pendientes
 
-No se localizaron capturas PNG/JPG, PDF ni exportaciones HAR/HTTP de PA4 en el repositorio fuera de target/.git. El archivo HTTP existente pertenece a inventario de Sesión 4, no a los endpoints nuevos.
+El usuario confirma siete capturas reales E01–E07, que se incorporarán al informe por separado. No se inspeccionaron sus imágenes ni se asignan aquí a casos específicos. Las respuestas REST reales obtenidas en esta revisión se describen abajo.
 
 | Evidencia | Estado y límite |
 |---|---|
-| Pantalla JSP de supervisión antes/después, observación y confirmación | PENDIENTE de captura real; MockMvc no renderiza visualmente la JSP. |
-| Mensajes visibles de validación y duplicado | PENDIENTE de captura real; existen assertions automatizadas 400/404/409. |
-| Respuestas desplegadas para PENDIENTE, REVISADO y estadísticas | PENDIENTE de guardar estado HTTP y cuerpo JSON reales desde 8083; disponible únicamente evidencia automatizada con servicio simulado. |
+| Pantalla JSP de supervisión antes/después, observación y confirmación | E01–E07 disponibles por separado según el usuario; pendiente vincular la captura correspondiente. MockMvc no renderiza visualmente la JSP. |
+| Mensajes visibles de validación y duplicado | E01–E07 disponibles por separado según el usuario; pendiente vincularlas con estos casos. Existen assertions automatizadas 400/404/409. |
+| Respuestas desplegadas para PENDIENTE, REVISADO y estadísticas | DISPONIBLE: tres GET reales HTTP 200 con JSON válido en rest-real. No son respuestas MockMvc. |
 | Integridad y rollback en MySQL/InnoDB | PENDIENTE si el informe exige demostración en ese motor. H2 ya aporta evidencia transaccional; no se debe provocar un fallo sobre pedidos reales para obtener capturas. |
-| Interfaz del supervisor cuando reportes no responde | PENDIENTE de evidencia específica; las pruebas existentes cubren cliente HTTP y pantalla de reportes, no esa contingencia visual del supervisor. |
+| Interfaz del supervisor cuando reportes no responde | CAPTURADA según confirmación del usuario; se incorporará por separado. Imagen no inspeccionada aquí; pendiente asociar su identificador al informe. |
 | Rúbrica oficial de entrega | No localizada en los archivos revisados. No se puede afirmar que todas estas capturas sean obligatorias; contrastar esta lista con la rúbrica. |
+
+## Respuestas REST reales y disponibilidad
+
+Capturadas el 22/11/2026 mediante GET sin credenciales, cookies ni redirecciones. Cada archivo registra fecha con zona -05:00, URL, código HTTP, Content-Type y cuerpo JSON recibido. No contiene cabeceras de autenticación ni Set-Cookie. Los cuerpos contienen pedidos de validación PA4 con nombres genéricos de prueba. Se revisaron antes de su publicación: no se detectaron credenciales, cookies ni datos personales sensibles.
+
+El login real `http://localhost:8081/sistema-pedidos/login` respondió HTTP 200. Esto comprueba disponibilidad HTTP, no una sesión autenticada del supervisor. El puerto 8083 respondió a los tres endpoints siguientes:
+
+| Evidencia | Resultado real | Archivo |
+|---|---|---|
+| GET /api/v1/pedidos/revisiones?estado=PENDIENTE | HTTP 200, JSON válido, 1 registro | [pendiente.txt](rest-real/pendiente.txt) |
+| GET /api/v1/pedidos/revisiones?estado=REVISADO | HTTP 200, JSON válido, 1 registro | [revisado.txt](rest-real/revisado.txt) |
+| GET /api/v1/pedidos/estadisticas/revisiones | HTTP 200; totalPedidos=2, totalRevisados=1, totalPendientes=1, porcentajeRevisado=50.00 | [estadisticas.txt](rest-real/estadisticas.txt) |
+
+Base real utilizada: `http://localhost:8083/pedidos-reportes-service`. Estas respuestas acreditan consultas al servicio desplegado, a diferencia de las diez invocaciones MockMvc/Mockito. No se inspeccionó la conexión del proceso ni se ejecutaron consultas directas a MySQL; estos GET no constituyen una demostración de commit/rollback en ese motor.
+
+## Evidencia de contingencia
+
+El usuario confirmó que la captura real del mensaje de contingencia ya existe y se incorporará al informe por separado. No se inspeccionó esa imagen ni se asignó un número de evidencia.
+
+Mensaje esperado según la vista: «El servicio de reportes no está disponible temporalmente. Puede continuar revisando pedidos.» Las pruebas automatizadas de cliente HTTP y pantalla de reportes siguen siendo evidencia distinta de esa captura visual.
+
+En la comprobación posterior, estadísticas volvió a responder HTTP 200 con totalPedidos=2, totalRevisados=1, totalPendientes=1 y porcentajeRevisado=50.00. Reportes ya estaba activo: no fue necesario reiniciarlo. Esa verificación no equivale a comprobar visualmente la recuperación de la sesión del supervisor; no se guardó una nueva captura HTTP de ella.
+
+Pendiente: vincular la captura de contingencia confirmada al informe. Una captura visual posterior con estadísticas disponibles no fue inspeccionada ni confirmada aquí.
 
 ## Cierre documental y alcance
 
