@@ -220,7 +220,7 @@ spring.mvc.view.suffix=.jsp
 
 spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/sistema_pedidos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima}
 spring.datasource.username=${DB_USERNAME:root}
-spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.password=${DB_PASSWORD}
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.open-in-view=false
@@ -230,30 +230,23 @@ inventario.api.connect-timeout-ms=2000
 inventario.api.read-timeout-ms=3000
 
 # Únicamente para laboratorio: sustituir por variables de entorno.
-demo.security.operador-password=${PEDIDOS_OPERADOR_PASSWORD:OperadorDemo2026!}
-demo.security.consulta-password=${PEDIDOS_CONSULTA_PASSWORD:ConsultaDemo2026!}
+demo.security.operador-password=${PEDIDOS_OPERADOR_PASSWORD}
+demo.security.consulta-password=${PEDIDOS_CONSULTA_PASSWORD}
 ```
 
 Los timeouts HTTP de **conexión (2000 ms)** y **lectura (3000 ms)** son ajustes del cliente de inventario; no garantizan un límite idéntico para el tiempo total de una operación de negocio.
 
 ### Usuarios de laboratorio
 
-| Usuario | Rol | Contraseña predeterminada *solo para clase* |
+| Usuario | Rol | Variable obligatoria |
 |---|---|---|
-| `operador` | `OPERADOR` | `OperadorDemo2026!` |
-| `consulta` | `CONSULTA` | `ConsultaDemo2026!` |
+| operador | OPERADOR | PEDIDOS_OPERADOR_PASSWORD |
+| consulta | CONSULTA | PEDIDOS_CONSULTA_PASSWORD |
+| supervisor | SUPERVISOR | SUPERVISOR_PASSWORD |
 
-Se administran en memoria mediante `InMemoryUserDetailsManager`; **no existe una tabla de usuarios**. Las contraseñas se codifican con BCrypt antes de registrarse en el gestor de usuarios en memoria. Los valores de respaldo del proyecto son públicos y **no son adecuados para ambientes expuestos**.
-
-Para sustituirlos antes de iniciar la aplicación en **PowerShell**:
-
-```powershell
-$env:PEDIDOS_OPERADOR_PASSWORD = "<clave-local-segura>"
-$env:PEDIDOS_CONSULTA_PASSWORD = "<otra-clave-local-segura>"
-```
-
-En despliegues reales, eliminar los valores predeterminados y utilizar un proveedor de identidad o un mecanismo seguro de administración de credenciales.
-
+Se administran en memoria y sus claves se codifican con BCrypt. No hay contraseñas
+predeterminadas en ejecución normal. El iniciador de la raíz solicita las tres
+mediante entrada oculta, además de las claves de las bases de datos.
 ## 7. Ejecución local
 
 ### 7.1 Iniciar la dependencia externa
@@ -266,7 +259,7 @@ Crear la base `sistema_pedidos` y verificar las variables `DB_URL`, `DB_USERNAME
 
 ### 7.3 Compilar y ejecutar Sistema de Pedidos
 
-Desde la raíz de este repositorio, en **PowerShell**:
+Desde el directorio Sesión 5/sistema-pedidos-springboot, en **PowerShell**:
 
 ```powershell
 .\mvnw.cmd clean test
@@ -440,7 +433,7 @@ La aplicación utiliza **MySQL** cuando se ejecuta normalmente. La conexión se 
 ```properties
 spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/sistema_pedidos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima}
 spring.datasource.username=${DB_USERNAME:root}
-spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.password=${DB_PASSWORD}
 ```
 
 Crear previamente la base de datos local, por ejemplo:
@@ -632,3 +625,115 @@ Para ejecutar toda la suite:
 ---
 
 **Uso académico:** curso *Desarrollo de Aplicaciones Empresariales Avanzado* · Continuidad del caso **Sistema de Pedidos** · Sesiones 7 y 9: **Spring MVC, Seguridad con Spring y Spring JDBC**.
+
+## PA4: revisión de pedidos por supervisor
+
+El módulo usa el esquema de la fase 1 ya aplicado. No ejecuta migraciones.
+Acceso: http://localhost:8081/sistema-pedidos/supervisor con el usuario
+supervisor y su contraseña ya configurada mediante SUPERVISOR_PASSWORD.
+
+- GET /supervisor (también /supervisor/pedidos): pendientes y revisiones registradas.
+- POST /supervisor/pedidos/{id}/revision: confirma la revisión y redirige al listado.
+- La observación es obligatoria y admite como máximo 500 caracteres.
+- Un pedido inexistente devuelve 404; una revisión duplicada, 409; datos
+  inválidos, 400; un fallo de acceso a datos, 503 sin exponer SQL.
+- Spring Security exige SUPERVISOR y CSRF válido. La raíz dirige al supervisor
+  a su módulo; conserva el destino anterior para los otros usuarios.
+
+PedidoRevisionService bloquea la fila con SELECT ... FOR UPDATE, comprueba
+el estado, actualiza pedido e inserta pedido_revision dentro de una misma
+transacción local. El índice único de pedido_id es una segunda protección
+contra duplicados. Una excepción revierte ambas operaciones; no hay llamadas
+a inventario o reportes dentro de esta transacción.
+
+### Comprobación manual
+
+1. Incorporar el nuevo código en el siguiente arranque o despliegue habitual;
+   una instancia anterior en ejecución no incorpora necesariamente estos cambios.
+   No volver a aplicar el SQL de la fase 1.
+2. Desde este directorio, usar .\mvnw.cmd verify para compilar, ejecutar las
+   pruebas y empaquetar. Para iniciar cuando el puerto esté disponible, usar
+   .\mvnw.cmd spring-boot:run con las variables de conexión y la contraseña
+   del supervisor ya configuradas. No iniciar otra instancia en el mismo puerto.
+3. Ingresar directamente a /sistema-pedidos/supervisor. Seleccionar un pedido
+   pendiente de prueba y registrar una observación. Esto modifica ese pedido real.
+4. Comprobar el mensaje de éxito, la desaparición de pendientes y la aparición
+   en revisiones con observación y fecha. Reenviar el POST con CSRF válido debe
+   devolver 409. Los roles OPERADOR y CONSULTA no pueden acceder al módulo.
+
+### Pruebas aisladas y continuidad de reportes
+
+Las pruebas activan el perfil test y utilizan H2 en memoria. La contraseña de
+supervisor del perfil test es exclusivamente ficticia. supervisor-schema.sql
+se utiliza únicamente desde @Sql en pruebas, nunca contra MySQL. Las pruebas
+de servicio no tienen una transacción envolvente: comprueban el estado después
+del commit o rollback del servicio. El fallo de rollback se provoca mediante
+una violación SQL real del índice único después del UPDATE. También se verifica
+que dos solicitudes concurrentes solo registran una revisión.
+
+Los tests antiguos de JDBC y API apuntaban a clases que ahora pertenecen a
+Sesión 12. build-helper-maven-plugin incorpora esas fuentes SOLO al ámbito de
+pruebas; no se modifican ni se empaquetan en el WAR. Se conservan escenarios
+de agregados, filtro, ordenación y contratos del servicio actual. Productos
+ahora devuelve JSON, no el antiguo HAL; /buscar es rechazado como ID inválido.
+El módulo de Sesión 12 debe permanecer en su ubicación relativa del repositorio.
+Las pruebas MVC del reporte simulan su cliente; la prueba del cliente HTTP
+simula un error de transporte y no requiere levantar el servicio 8083.
+
+La suite H2 comprueba la lógica y las transacciones, pero no sustituye una
+comprobación manual en MySQL/InnoDB ni la renderización JSP en el navegador.
+
+### Reproducción de PA4 desde un clon nuevo
+
+Esta sección corresponde al estado actual de PA4; las secciones de sesiones
+anteriores conservan referencias históricas. Requiere Java 21, Maven 3.9+
+y los proyectos de sesiones 4, 5 y 12 en sus rutas del repositorio.
+
+1. Mantener MySQL en 3307 con pedidosdb y los usuarios spedidos_app y
+   spedidos_reportes; el segundo necesita lectura de pedido y pedido_revision.
+   SQL Server debe atender en 1433 con InventarioDB e inventario_app.
+   Las claves se definen localmente, nunca en Git.
+2. En inventario, copiar config/database.example.properties a
+   config/database.properties. Configurar solo URL, usuario y JNDI.
+   El archivo local se ignora; el iniciador usa MSSQLSERVER_PASSWORD.
+   WildFly debe estar previamente provisionado y contener el despliegue
+   administrado de inventario en target/server; el iniciador no lo crea
+   ni lo redespliega. En una instalación nueva puede prepararse mediante
+   mvn -Dmaven.test.skip=true package desde inventario, con bases y usuarios
+   ya preparados. No hacerlo sobre un servidor en ejecución.
+3. En una base nueva, preparar la tabla pedido del sistema base y aplicar
+   una sola vez database/01_pa4_revision_pedidos.sql después de sus
+   comprobaciones previas. En la base existente, no repetirlo. El iniciador
+   valida el esquema, desactiva inicialización SQL y migraciones y no crea datos.
+4. Desde la raíz ejecutar .\estado-pa4.ps1 y .\iniciar-pa4.ps1.
+   Si Windows bloquea scripts locales, usar para esa sesión:
+   powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\iniciar-pa4.ps1.
+   Puede indicarse -MavenPath si Maven no se detecta.
+   -Servicios WildFly limita el arranque a inventario, sin detenerlo previamente.
+5. El iniciador usa DB_URL, DB_USERNAME y DB_PASSWORD independientes
+   por proceso, y pregunta las claves de supervisor, operador y consulta.
+   Fuera del iniciador deben proporcionarse estas variables en el entorno.
+   El principal conserva como URL predeterminada MySQL 3306; para este entorno
+   se debe sobrescribir a 3307. Los registros y PID quedan en .pa4-runtime,
+   excluido del commit.
+
+Pantallas: http://localhost:8081/sistema-pedidos/pedidos,
+http://localhost:8081/sistema-pedidos/reportes/pedidos y
+http://localhost:8081/sistema-pedidos/supervisor.
+
+Los endpoints de revisión de reportes son:
+
+- http://localhost:8083/pedidos-reportes-service/api/v1/pedidos/revisiones?estado=PENDIENTE
+  (también admite REVISADO).
+- http://localhost:8083/pedidos-reportes-service/api/v1/pedidos/estadisticas/revisiones.
+
+Para verificar desde el proyecto principal sin que PowerShell convierta las
+advertencias de stderr en errores: cmd /d /c "mvn -B test > maven-test.log 2>&1"
+(o sustituir mvn por mvnw.cmd si el wrapper funciona). Consultar el código
+de salida, el resumen final y target/surefire-reports. El perfil de pruebas
+usa exclusivamente H2 y claves ficticias; no requiere servicios externos.
+
+La última ejecución confirmada fue BUILD SUCCESS: 44 pruebas, 0 fallos,
+0 errores y 0 omitidas. La limpieza de seguridad posterior no volvió a ejecutar
+Maven. Los secretos retirados de archivos actuales pueden permanecer en el
+historial Git: no reutilizarlos y rotar cualquier credencial real expuesta.

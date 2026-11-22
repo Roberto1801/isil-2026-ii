@@ -7,8 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.isil.edu.pe.spedidos.entity.Pedido;
-import com.isil.edu.pe.spedidos.service.PedidoService;
+import com.isil.edu.pe.pedidos.reportes.service.domain.Pedido;
+import com.isil.edu.pe.pedidos.reportes.controller.PedidoApiController;
+import com.isil.edu.pe.pedidos.reportes.service.PedidoReporteService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,13 +25,13 @@ class PedidoApiControllerTest {
 
   private static final String SUMMARY_PATH = ORDERS_PATH + "/resumen";
 
-  private PedidoService pedidoService;
+  private PedidoReporteService pedidoService;
 
   private MockMvc mockMvc;
 
   @BeforeEach
   void setUp() {
-      pedidoService = mock(PedidoService.class);
+      pedidoService = mock(PedidoReporteService.class);
       mockMvc = MockMvcBuilders
           .standaloneSetup(new PedidoApiController(pedidoService))
           .build();
@@ -41,7 +42,7 @@ class PedidoApiControllerTest {
   void returnEmptyJsonArrayFromPedidoApiControllerWhenNoOrdersExist()
       throws Exception {
     // Arrange: definir la única respuesta del colaborador necesaria.
-    when(pedidoService.listarPedidos()).thenReturn(List.of());
+    when(pedidoService.listarTodos()).thenReturn(List.of());
 
     // Act: ejercer el contrato HTTP del SUT.
     ResultActions response = mockMvc.perform(get(ORDERS_PATH));
@@ -58,7 +59,7 @@ class PedidoApiControllerTest {
   void returnZeroOrderCountFromPedidoApiControllerWhenNoOrdersExist()
       throws Exception {
     // Arrange
-    when(pedidoService.listarPedidos()).thenReturn(List.of());
+    when(pedidoService.listarTodos()).thenReturn(List.of());
 
     // Act
     ResultActions response = mockMvc.perform(get(SUMMARY_PATH));
@@ -76,8 +77,8 @@ class PedidoApiControllerTest {
   void returnOrderCountOfTwoFromPedidoApiControllerWhenTwoOrdersExist()
       throws Exception {
     // Arrange: datos mínimos para comprobar el conteo.
-    List<Pedido> orders = List.of(new Pedido(), new Pedido());
-    when(pedidoService.listarPedidos()).thenReturn(orders);
+    List<Pedido> orders = List.of(pedido(0), pedido(0));
+    when(pedidoService.listarTodos()).thenReturn(orders);
 
     // Act
     ResultActions response = mockMvc.perform(get(SUMMARY_PATH));
@@ -94,13 +95,13 @@ class PedidoApiControllerTest {
       throws Exception {
 
     // Arrange
-    Pedido first = new Pedido();
-    first.setCantidad(2);
+    Pedido first = pedido(2);
 
-    Pedido second = new Pedido();
-    second.setCantidad(3);
 
-    when(pedidoService.listarPedidos())
+    Pedido second = pedido(3);
+
+
+    when(pedidoService.listarTodos())
         .thenReturn(List.of(first, second));
 
     // Act
@@ -115,4 +116,5 @@ class PedidoApiControllerTest {
         .andExpect(jsonPath("$.totalUnidades").value(5));
   }
 
+  private Pedido pedido(int cantidad) { return new Pedido(1L, "Ana", "P1", "Producto", java.math.BigDecimal.ONE, cantidad, java.math.BigDecimal.ONE, java.time.LocalDateTime.now()); }
 }

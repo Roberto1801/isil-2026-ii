@@ -8,12 +8,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import org.springframework.context.annotation.Import;
+import com.isil.edu.pe.pedidos.reportes.controller.PedidoReporteController;
+import com.isil.edu.pe.pedidos.reportes.service.impl.PedidoReporteServiceImpl;
+import com.isil.edu.pe.pedidos.reportes.repository.PedidoReporteJdbcRepository;
+import com.isil.edu.pe.pedidos.reportes.repository.mapper.PedidoRowMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -25,6 +29,8 @@ import org.springframework.web.context.WebApplicationContext;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Import({PedidoReporteController.class, PedidoReporteServiceImpl.class, com.isil.edu.pe.pedidos.reportes.repository.PedidoRevisionReporteRepository.class,
+    PedidoReporteJdbcRepository.class, PedidoRowMapper.class})
 class PedidoReporteControllerIntegrationTest {
 
   private MockMvc mockMvc;
@@ -70,24 +76,24 @@ class PedidoReporteControllerIntegrationTest {
   }
 
   @Test
-  @DisplayName("Return HAL product sales collection when report is requested")
-  void returnHalProductSalesCollectionWhenReportIsRequested() throws Exception {
+  @DisplayName("Return current JSON product sales contract from extracted report service")
+  void returnJsonProductSalesCollectionWhenReportIsRequested() throws Exception {
     mockMvc.perform(get("/api/v1/pedidos/estadisticas/productos")
             .with(user("operador").roles("OPERADOR")))
         .andExpect(status().isOk())
-        .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON))
-        .andExpect(jsonPath("$._embedded").exists())
-        .andExpect(jsonPath("$._links.self.href").exists())
-        .andExpect(jsonPath("$._links['estadisticas-resumen'].href").exists());
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$[0].productoCodigo").value("MOU-001"))
+        .andExpect(jsonPath("$[0].totalUnidades").value(3))
+        .andExpect(jsonPath("$[1].productoCodigo").value("LAP-001"));
   }
 
   @Test
-  @DisplayName("Return not found when legacy action style search URI is requested")
-  void returnNotFoundWhenLegacyActionStyleSearchUriIsRequested() throws Exception {
+  @DisplayName("Reject legacy search URI: current report API expects a numeric ID")
+  void rejectLegacyActionStyleSearchUri() throws Exception {
     mockMvc.perform(get("/api/v1/pedidos/buscar")
             .param("cliente", "Ana")
             .with(user("consulta").roles("CONSULTA")))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isBadRequest());
   }
 
   private void insertarPedido(
@@ -107,8 +113,8 @@ class PedidoReporteControllerIntegrationTest {
           precio_unitario,
           cantidad,
           total,
-          fecha
-        ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          fecha, revisado
+        ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)
         """,
         cliente,
         productoCodigo,

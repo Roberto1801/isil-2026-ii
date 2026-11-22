@@ -15,9 +15,7 @@ IF NOT EXISTS (
     WHERE name = N'inventario_app'
 )
 BEGIN
-    CREATE LOGIN inventario_app
-        WITH PASSWORD = 'Inventario2026!',
-             CHECK_POLICY = ON;
+    THROW 50001, 'Cree primero el login inventario_app desde SSMS con una clave privada.', 1;
 END;
 GO
 

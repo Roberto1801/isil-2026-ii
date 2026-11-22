@@ -24,7 +24,7 @@ Jakarta Persistence / @PersistenceContext
 
 ## 1. Archivo externo
 
-Editar:
+Copiar config/database.example.properties a config/database.properties (excluido de Git) y editar los datos no secretos:
 
 ```text
 config/database.properties
@@ -35,14 +35,13 @@ Ejemplo:
 ```properties
 org.wildfly.datasources.mssqlserver.connection-url=jdbc:sqlserver://localhost:1433;databaseName=InventarioDB;encrypt=true;trustServerCertificate=true
 org.wildfly.datasources.mssqlserver.user-name=inventario_app
-org.wildfly.datasources.mssqlserver.password=Inventario2026!
 org.wildfly.datasources.mssqlserver.jndi-name=java:jboss/datasources/InventarioDS
 org.wildfly.datasources.mssqlserver.min-pool-size=2
 org.wildfly.datasources.mssqlserver.max-pool-size=10
 org.wildfly.datasources.mssqlserver.jta=true
 ```
 
-> Para producción no guardar contraseñas en Git. Usar WildFly Credential Store, variables de entorno o un gestor de secretos.
+> La clave se entrega mediante MSSQLSERVER_PASSWORD. El iniciador PA4 la solicita con entrada oculta; no agregarla al archivo ni a comandos guardados. Para una instalación nueva, crear primero el login inventario_app desde el diálogo de SSMS con una clave privada.
 
 ## 2. `RestApplication`
 

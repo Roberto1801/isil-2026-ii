@@ -95,7 +95,7 @@ Usuario académico:
 
 ```text
 inventario_app
-Inventario2026!
+<DEFINIR_LOCALMENTE>
 ```
 
 ## 5. Revisar el `pom.xml`

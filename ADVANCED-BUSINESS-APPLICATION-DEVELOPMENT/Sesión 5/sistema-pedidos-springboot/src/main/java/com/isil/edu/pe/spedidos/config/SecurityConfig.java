@@ -25,6 +25,7 @@ public class SecurityConfig {
     return httpSecurity.authorizeHttpRequests(auth -> auth
             .requestMatchers("/assets/**").permitAll()
             .requestMatchers("/h2-console/**").denyAll()
+            .requestMatchers("/supervisor", "/supervisor/**").hasRole("SUPERVISOR")
             .requestMatchers(HttpMethod.POST, "/pedidos")
               .hasAnyRole("OPERADOR")
             .requestMatchers(HttpMethod.GET, "/api/v1/pedidos", "/api/v1/pedidos/**")
@@ -45,24 +46,33 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
-  @Bean
-  public UserDetailsService userDetailsService(
-      PasswordEncoder encoder,
-      @Value("${demo.security.operador-password}")
-      String operadorPassword,
-      @Value("${demo.security.consulta-password}")
-      String consultaPassword) {
 
-    UserDetails operador = User.withUsername("operador")
-        .password(encoder.encode(operadorPassword))
-        .roles("OPERADOR")
-        .build();
-    UserDetails consulta = User.withUsername("consulta")
-        .password(encoder.encode(consultaPassword))
-        .roles("CONSULTA")
-        .build();
+@Bean
+public UserDetailsService userDetailsService(
+    PasswordEncoder encoder,
+    @Value("${demo.security.operador-password}")
+    String operadorPassword,
+    @Value("${demo.security.consulta-password}")
+    String consultaPassword,
+    @Value("${demo.security.supervisor-password}")
+    String supervisorPassword) {
 
-    return new InMemoryUserDetailsManager(operador, consulta);
-  }
+  UserDetails operador = User.withUsername("operador")
+      .password(encoder.encode(operadorPassword))
+      .roles("OPERADOR")
+      .build();
 
+  UserDetails consulta = User.withUsername("consulta")
+      .password(encoder.encode(consultaPassword))
+      .roles("CONSULTA")
+      .build();
+
+  UserDetails supervisor = User.withUsername("supervisor")
+      .password(encoder.encode(supervisorPassword))
+      .roles("SUPERVISOR")
+      .build();
+
+  return new InMemoryUserDetailsManager(
+      operador, consulta, supervisor);
+}
 }

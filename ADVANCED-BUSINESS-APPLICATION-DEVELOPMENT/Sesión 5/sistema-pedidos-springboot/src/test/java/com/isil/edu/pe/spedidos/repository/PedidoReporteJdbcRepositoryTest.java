@@ -3,9 +3,12 @@ package com.isil.edu.pe.spedidos.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.isil.edu.pe.spedidos.entity.Pedido;
-import com.isil.edu.pe.spedidos.repository.projection.ProductoVendidoProjection;
-import com.isil.edu.pe.spedidos.repository.projection.ResumenPedidosProjection;
+import com.isil.edu.pe.pedidos.reportes.service.domain.Pedido;
+import com.isil.edu.pe.pedidos.reportes.repository.PedidoReporteJdbcRepository;
+import com.isil.edu.pe.pedidos.reportes.repository.mapper.PedidoRowMapper;
+import com.isil.edu.pe.pedidos.reportes.repository.projection.ProductoVendidoProjection;
+import com.isil.edu.pe.pedidos.reportes.repository.projection.ResumenPedidosProjection;
+import org.springframework.context.annotation.Import;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Import({PedidoReporteJdbcRepository.class, PedidoRowMapper.class})
 class PedidoReporteJdbcRepositoryTest {
 
   @Autowired
@@ -73,7 +77,7 @@ class PedidoReporteJdbcRepositoryTest {
 
     // Assert
     assertEquals(2, pedidos.size());
-    assertTrue(pedidos.stream().allMatch(pedido -> "Ana Torres".equals(pedido.getCliente())));
+    assertTrue(pedidos.stream().allMatch(pedido -> "Ana Torres".equals(pedido.cliente())));
   }
 
   @Test
@@ -107,8 +111,8 @@ class PedidoReporteJdbcRepositoryTest {
           precio_unitario,
           cantidad,
           total,
-          fecha
-        ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          fecha, revisado
+        ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)
         """,
         cliente,
         productoCodigo,

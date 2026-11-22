@@ -18,9 +18,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.context.annotation.Import;
+import com.isil.edu.pe.pedidos.reportes.controller.PedidoApiController;
+import com.isil.edu.pe.pedidos.reportes.service.impl.PedidoReporteServiceImpl;
+import com.isil.edu.pe.pedidos.reportes.repository.PedidoReporteJdbcRepository;
+import com.isil.edu.pe.pedidos.reportes.repository.mapper.PedidoRowMapper;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import({PedidoApiController.class, PedidoReporteServiceImpl.class, com.isil.edu.pe.pedidos.reportes.repository.PedidoRevisionReporteRepository.class,
+    PedidoReporteJdbcRepository.class, PedidoRowMapper.class})
 class PedidoSecurityIntegrationTest {
 
   private MockMvc mockMvc;

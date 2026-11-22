@@ -7,7 +7,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
   @GetMapping("/")
-  public String inicio() {
+  public String inicio(jakarta.servlet.http.HttpServletRequest request) {
+    if (request.isUserInRole("SUPERVISOR")) {
+      return "redirect:/supervisor";
+    }
     return "redirect:/pedidos";
   }
 

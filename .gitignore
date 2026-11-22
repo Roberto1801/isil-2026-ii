@@ -22,3 +22,26 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Archivos locales de PA4
+**/target/
+/.pa4-runtime/
+/.codex/
+/.agents/
+/.aws/
+**/.env
+**/.env.*
+!**/.env.example
+*.tmp
+*.temp
+*.bak
+*.dump
+*.sql.gz
+*.hprof
+*.jks
+*.p12
+*.pfx
+*.key
+/privado/
+/evidencias-privadas/
+/ADVANCED-BUSINESS-APPLICATION-DEVELOPMENT/Sesión 4/inventario-service/config/database.properties

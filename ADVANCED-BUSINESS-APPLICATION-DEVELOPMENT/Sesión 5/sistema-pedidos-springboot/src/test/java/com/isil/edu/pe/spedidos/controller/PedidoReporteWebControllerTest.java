@@ -16,10 +16,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.isil.edu.pe.spedidos.client.reportes.PedidoReporteClient;
+import com.isil.edu.pe.spedidos.client.reportes.dto.ResumenPedidosResponse;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
 class PedidoReporteWebControllerTest {
+  @MockitoBean
+  private PedidoReporteClient client;
 
   private MockMvc mockMvc;
 
@@ -28,6 +34,10 @@ class PedidoReporteWebControllerTest {
 
   @BeforeEach
   void setUp() {
+    when(client.obtenerResumen()).thenReturn(new ResumenPedidosResponse(
+        0, 0, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO));
+    when(client.buscarPorCliente("Ana")).thenReturn(java.util.List.of());
+    when(client.listarProductosMasVendidos()).thenReturn(java.util.List.of());
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
         .apply(springSecurity())
         .build();
@@ -42,6 +52,17 @@ class PedidoReporteWebControllerTest {
         .andExpect(status().isOk())
         .andExpect(view().name("reportes-pedidos"))
         .andExpect(model().attributeExists("resumen", "productos", "pedidos", "cliente"));
+  }
+
+  @Test
+  void muestra503CuandoReportesNoEstaDisponible() throws Exception {
+    when(client.listarProductosMasVendidos()).thenThrow(
+        new com.isil.edu.pe.spedidos.client.reportes.PedidoReporteNoDisponibleException(
+            "Reportes no disponible", new java.io.IOException("Conexión rechazada")));
+    mockMvc.perform(get("/reportes/pedidos").with(user("consulta").roles("CONSULTA")))
+        .andExpect(status().isServiceUnavailable())
+        .andExpect(view().name("error"))
+        .andExpect(model().attributeExists("error"));
   }
 
 }

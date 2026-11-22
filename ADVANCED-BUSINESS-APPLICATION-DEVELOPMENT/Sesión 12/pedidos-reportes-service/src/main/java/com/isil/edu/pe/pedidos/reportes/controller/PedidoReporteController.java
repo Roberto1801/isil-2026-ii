@@ -7,6 +7,7 @@ import com.isil.edu.pe.pedidos.reportes.controller.dto.ProductoVendidoDto;
 import com.isil.edu.pe.pedidos.reportes.controller.dto.ResumenPedidosDto;
 import com.isil.edu.pe.pedidos.reportes.service.PedidoReporteService;
 import java.util.List;
+import java.util.Map;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Controlador REST para reportes de pedidos.
  * Proporciona endpoints para listar pedidos por cliente, obtener resumen de pedidos
- * y listar productos más vendidos con enlaces HAL.
+ * y listar productos mÃ¡s vendidos con enlaces HAL.
  */
 @RestController
 @RequestMapping("/api/v1/pedidos")
@@ -72,5 +73,24 @@ public class PedidoReporteController {
         .toList();
   }
 
+
+  @GetMapping(value = "/revisiones", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<?> listarRevisiones(@RequestParam String estado) {
+    String estadoNormalizado = estado.trim().toUpperCase(java.util.Locale.ROOT);
+
+    if (!estadoNormalizado.equals("PENDIENTE")
+        && !estadoNormalizado.equals("REVISADO")) {
+      return ResponseEntity.badRequest()
+          .body(Map.of("error", "Estado invalido. Use PENDIENTE o REVISADO."));
+    }
+
+    return ResponseEntity.ok(reporteService.listarRevisiones(estadoNormalizado));
+  }
+
+  @GetMapping(value = "/estadisticas/revisiones",
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Map<String, Object>> estadisticasRevisiones() {
+    return ResponseEntity.ok(reporteService.obtenerEstadisticasRevisiones());
+  }
 }
 

@@ -6,20 +6,14 @@
          https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-
-	<!-- ========================= -->
 	<!-- SPRING BOOT               -->
-	<!-- ========================= -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.1</version>
 		<relativePath/>
 	</parent>
-
-	<!-- ========================= -->
 	<!-- DATOS DEL PROYECTO        -->
-	<!-- ========================= -->
 	<groupId>com.isil.edu.pe</groupId>
 	<artifactId>sistema-pedidos-springboot</artifactId>
 	<version>3.0.0-SNAPSHOT</version>
@@ -36,38 +30,34 @@
         siguen siendo JSP.
     -->
 	<packaging>war</packaging>
-
-	<!-- ========================= -->
 	<!-- CONFIGURACIÓN GENERAL     -->
-	<!-- ========================= -->
 	<properties>
 		<java.version>21</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	<dependencies>
-		<!-- ===================================== -->
+        <!-- Compila las clases reales de S12 solo para conservar las pruebas
+             de reportes trasladados; no se incluyen en el WAR principal. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-hateoas</artifactId>
+            <scope>test</scope>
+        </dependency>
 		<!-- 1. CAPA WEB                           -->
 		<!-- Jakarta Servlet -> Spring MVC         -->
-		<!-- ===================================== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
-
-		<!-- ===================================== -->
 		<!-- 2. INTEGRACIÓN HTTP                   -->
 		<!-- Jakarta REST Client -> RestClient     -->
-		<!-- ===================================== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-restclient</artifactId>
 		</dependency>
-
-		<!-- ===================================== -->
 		<!-- 3. PERSISTENCIA                       -->
 		<!-- EntityManager -> Spring Data JPA      -->
-		<!-- ===================================== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -77,11 +67,8 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
-
-		<!-- ===================================== -->
 		<!-- 4. BASE DE DATOS                      -->
 		<!-- Histórico local del Sistema Pedidos   -->
-		<!-- ===================================== -->
         <!-- MySQL: ejecución normal -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -95,28 +82,19 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
-
-		<!-- ===================================== -->
 		<!-- 5. H2 CONSOLE                         -->
 		<!-- Solo desarrollo / demostración        -->
-		<!-- ===================================== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-h2console</artifactId>
 		</dependency>
-
-		<!-- ===================================== -->
 		<!-- 6. JSP                                -->
 		<!-- Se conservan vistas existentes        -->
-		<!-- ===================================== -->
 		<dependency>
 			<groupId>org.apache.tomcat.embed</groupId>
 			<artifactId>tomcat-embed-jasper</artifactId>
 		</dependency>
-
-		<!-- ===================================== -->
 		<!-- 7. JSTL / JAKARTA TAGS                -->
-		<!-- ===================================== -->
 		<dependency>
 			<groupId>jakarta.servlet.jsp.jstl</groupId>
 			<artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
@@ -138,11 +116,8 @@
             <artifactId>spring-boot-starter-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-		<!-- ===================================== -->
 		<!-- 8. PRUEBAS                            -->
 		<!-- JUnit + Mockito + Spring Test         -->
-		<!-- ===================================== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -152,6 +127,23 @@
 	<build>
 		<finalName>sistema-pedidos-springboot</finalName>
 		<plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>reportes-test-sources</id>
+                        <phase>generate-test-sources</phase>
+                        <goals><goal>add-test-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/../../Sesión 12/pedidos-reportes-service/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>

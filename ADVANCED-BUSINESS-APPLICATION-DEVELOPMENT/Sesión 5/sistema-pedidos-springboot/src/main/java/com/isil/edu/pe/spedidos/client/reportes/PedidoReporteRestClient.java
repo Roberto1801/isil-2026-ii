@@ -4,6 +4,7 @@ import com.isil.edu.pe.spedidos.client.reportes.dto.PedidoReporteResponse;
 import com.isil.edu.pe.spedidos.client.reportes.dto.ProductoVendidoResponse;
 import com.isil.edu.pe.spedidos.client.reportes.dto.ResumenPedidosResponse;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -74,6 +75,40 @@ public class PedidoReporteRestClient implements PedidoReporteClient {
     }
   }
 
+  @Override
+  public List<Map<String, Object>> listarRevisiones(String estado) {
+    if (!"PENDIENTE".equals(estado) && !"REVISADO".equals(estado)) {
+      throw new IllegalArgumentException("Estado de revision invalido");
+    }
+    try {
+      List<Map<String, Object>> response = restClient.get()
+          .uri(baseUrl + "/revisiones?estado={estado}", estado)
+          .accept(MediaType.APPLICATION_JSON)
+          .retrieve()
+          .body(new ParameterizedTypeReference<List<Map<String, Object>>>() { });
+      return response == null ? List.of() : response;
+    } catch (RestClientResponseException | ResourceAccessException e) {
+      throw noDisponible(e);
+    }
+  }
+
+  @Override
+  public Map<String, Object> obtenerEstadisticasRevisiones() {
+    try {
+      Map<String, Object> response = restClient.get()
+          .uri(baseUrl + "/estadisticas/revisiones")
+          .accept(MediaType.APPLICATION_JSON)
+          .retrieve()
+          .body(new ParameterizedTypeReference<Map<String, Object>>() { });
+      if (response == null) {
+        throw new PedidoReporteNoDisponibleException(
+            "El servicio de reportes devolvio una respuesta vacia", null);
+      }
+      return response;
+    } catch (RestClientResponseException | ResourceAccessException e) {
+      throw noDisponible(e);
+    }
+  }
   private PedidoReporteNoDisponibleException noDisponible(Exception e) {
     return new PedidoReporteNoDisponibleException(
         "pedidos-reportes-service no está disponible. Verifique que se ejecute en el puerto 8083.", e);
