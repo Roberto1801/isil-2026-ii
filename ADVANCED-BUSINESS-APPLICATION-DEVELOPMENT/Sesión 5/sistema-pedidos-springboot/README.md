@@ -737,3 +737,11 @@ La última ejecución confirmada fue BUILD SUCCESS: 44 pruebas, 0 fallos,
 0 errores y 0 omitidas. La limpieza de seguridad posterior no volvió a ejecutar
 Maven. Los secretos retirados de archivos actuales pueden permanecer en el
 historial Git: no reutilizarlos y rotar cualquier credencial real expuesta.
+
+### Cierre documental PA4
+
+La [guía principal de la entrega](../../../README.md#pruebas-maven) contiene los comandos independientes de pruebas de Sesión 5 y Sesión 12, redirección segura de stderr y la opción temporal `-Dmaven.repo.local` para el repositorio del usuario.
+
+Resultados históricos confirmados: Sesión 5, 44 pruebas aprobadas; Sesión 12, 11 aprobadas (diez casos REST con Mockito y una carga de contexto con H2). Ambas ejecuciones finalizaron BUILD SUCCESS, sin fallos, errores ni omitidas. No se repitieron durante el cierre documental.
+
+El [índice de evidencias](../../../evidencias-pa4/INDICE_EVIDENCIAS.md) identifica métodos, assertions, archivos y capturas pendientes. El rollback se demostró en H2, no en MySQL. La consigna oficial sigue pendiente de localizar para contrastar los requisitos de entrega.

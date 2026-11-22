@@ -1,0 +1,14 @@
+﻿EXTRACTO: solo resultados Maven; no es el registro completo.
+Origen:
+C:\ProyectosISIL\isil-2026-ii-pa4\ADVANCED-BUSINESS-APPLICATION-DEVELOPMENT\Sesión 12\pedidos-reportes-service\target\maven-pa4-reportes-test-20261122-123921.log
+SHA256 original:
+5286D914076EAF15BE91481CF9E3E48C90AC7BACB3EB739E5F4EDACCF7B99F57
+
+[INFO] Running com.isil.edu.pe.pedidos.reportes.controller.PedidoRevisionControllerTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.78 s -- in com.isil.edu.pe.pedidos.reportes.controller.PedidoRevisionControllerTest
+[INFO] Running com.isil.edu.pe.pedidos.reportes.PedidosReportesServiceApplicationTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.884 s -- in com.isil.edu.pe.pedidos.reportes.PedidosReportesServiceApplicationTests
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+[INFO] Total time:  33.143 s
+[INFO] Finished at: 2026-11-22T12:40:01-05:00

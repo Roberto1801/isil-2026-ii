@@ -1,0 +1,32 @@
+﻿EXTRACTO: solo resultados Maven; no es el registro completo.
+Origen:
+C:\ProyectosISIL\isil-2026-ii-pa4\ADVANCED-BUSINESS-APPLICATION-DEVELOPMENT\Sesión 5\sistema-pedidos-springboot\target\maven-pa4-test-verificacion.log
+SHA256 original:
+A293D1D4D22A8ECE52C38B434D1666C73CBB8EC299FEDA88859C95C6CCB664A2
+
+[INFO] Running com.isil.edu.pe.spedidos.client.reportes.PedidoReporteRestClientTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.987 s -- in com.isil.edu.pe.spedidos.client.reportes.PedidoReporteRestClientTest
+[INFO] Running com.isil.edu.pe.spedidos.controller.PedidoApiControllerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.196 s -- in com.isil.edu.pe.spedidos.controller.PedidoApiControllerTest
+[INFO] Running com.isil.edu.pe.spedidos.controller.PedidoReporteControllerIntegrationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.72 s -- in com.isil.edu.pe.spedidos.controller.PedidoReporteControllerIntegrationTest
+[INFO] Running com.isil.edu.pe.spedidos.controller.PedidoReporteWebControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.290 s -- in com.isil.edu.pe.spedidos.controller.PedidoReporteWebControllerTest
+[INFO] Running com.isil.edu.pe.spedidos.controller.PedidoSecurityIntegrationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.605 s -- in com.isil.edu.pe.spedidos.controller.PedidoSecurityIntegrationTest
+[INFO] Running com.isil.edu.pe.spedidos.controller.PedidoSupervisorControllerIntegrationTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.28 s -- in com.isil.edu.pe.spedidos.controller.PedidoSupervisorControllerIntegrationTest
+[INFO] Running com.isil.edu.pe.spedidos.repository.PedidoReporteJdbcRepositoryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.239 s -- in com.isil.edu.pe.spedidos.repository.PedidoReporteJdbcRepositoryTest
+[INFO] Running com.isil.edu.pe.spedidos.service.impl.PedidoServiceImplTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.445 s -- in com.isil.edu.pe.spedidos.service.impl.PedidoServiceImplTest
+[INFO] Running com.isil.edu.pe.spedidos.service.PedidoRevisionServiceIntegrationTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.905 s -- in com.isil.edu.pe.spedidos.service.PedidoRevisionServiceIntegrationTest
+[INFO] Running com.isil.edu.pe.spedidos.service.PedidoTransaccionServiceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.777 s -- in com.isil.edu.pe.spedidos.service.PedidoTransaccionServiceTest
+[INFO] Running com.isil.edu.pe.spedidos.SistemaPedidosSpringbootApplicationTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.090 s -- in com.isil.edu.pe.spedidos.SistemaPedidosSpringbootApplicationTests
+[INFO] Tests run: 44, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+[INFO] Total time:  01:14 min
+[INFO] Finished at: 2026-11-22T06:49:29-05:00

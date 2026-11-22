@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.isil.edu.pe.spedidos.service.PedidoRevisionServiceIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.905 s -- in com.isil.edu.pe.spedidos.service.PedidoRevisionServiceIntegrationTest
